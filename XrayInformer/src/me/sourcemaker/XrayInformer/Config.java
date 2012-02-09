@@ -17,7 +17,6 @@ public class Config {
 				
 		config.addDefault("default_world", "world");
 		config.addDefault("check_updates", true);
-		config.addDefault("logger", "logblock");
 		
 		config.addDefault("diamond", true);
 		config.addDefault("gold", true);
@@ -59,17 +58,5 @@ public class Config {
 	
 	public boolean checkupdates() {
 		return config.getBoolean("check_updates");
-	}
-	
-	public String getLogger() {
-		
-		if (config.getString("logger").equalsIgnoreCase("hawkeye"))
-		{
-			return "HE";
-		} else
-		{
-			return "LB";
-		}	
-	}
-	
+	}	
 }

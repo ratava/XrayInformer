@@ -29,7 +29,6 @@ public class XrayInformer extends JavaPlugin{
 	
 	public final Config config = new Config(this);
 	public static final Logger log = Logger.getLogger("Minecraft");
-	public String logger;
 	
 	@SuppressWarnings("unused")
 	private Consumer lbconsumer = null;
@@ -45,8 +44,6 @@ public class XrayInformer extends JavaPlugin{
 		config.load();
 		PluginDescriptionFile pdfFile = this.getDescription();
 		this.version = pdfFile.getVersion();
-		
-		this.logger = config.getLogger();
 		
 		if (config.checkupdates() == true) {
 			
@@ -68,7 +65,7 @@ public class XrayInformer extends JavaPlugin{
 			}
 			
 		}
-		
+			
 		log.info("[XrayInformer "+version+"] System enabled");
 		
 	}
@@ -256,7 +253,7 @@ public class XrayInformer extends JavaPlugin{
 		
 	}
 	
-	private void listAllXRayers(CommandSender sender, String world, int oreid, String bantype, float maxrate){
+	private void listAllXRayersLB(CommandSender sender, String world, int oreid, String bantype, float maxrate){
 		LogBlock logBlock = (LogBlock) getServer().getPluginManager().getPlugin("LogBlock");
 
 		QueryParams params = new QueryParams(logBlock);
@@ -332,7 +329,7 @@ public class XrayInformer extends JavaPlugin{
 				String playername = "";
 				String world = "";
 				int oreid = 0;
-				String logger = "lb";
+				//String loggingplugin = "lb";
 				String bantype = "none";
 				float maxrate = (float) 0;
 			
@@ -396,64 +393,45 @@ public class XrayInformer extends JavaPlugin{
 				// player given, rest empty				-	throw global stats for configured world
 				if ((playername.length() > 0) && (world.length() == 0) && (oreid == 0)) {
 					world = config.defaultWorld();
-					if (logger.equalsIgnoreCase("LB")) {
-						checkglobal_lb(playername, sender, world);
-					} else if (logger.equalsIgnoreCase("HE")) {
-					  checkglobal_he(playername, sender, world);
-					}
+					checkglobal_lb(playername, sender, world);
 					
 					return true;
 				}
 				
 				// player given, world given, ore empty -	throw stats for given world
 				if ((playername.length() > 0) && (world.length() > 0) && (oreid == 0)) {					
-					if (logger.equalsIgnoreCase("LB")) {
-						checkglobal_lb(playername, sender, world);
-					} else if (logger.equalsIgnoreCase("HE")) {
-					  checkglobal_he(playername, sender, world);
-					}
-					
+						checkglobal_lb(playername, sender, world);					
 					return true;
 				}
 				
 				// player given, world given, ore given -	throw stats for given world and given ore
 				if ((playername.length() > 0) && (world.length() > 0) && (oreid > 0)) {					
-					if (logger.equalsIgnoreCase("LB")) {
 						if ( (playername.equalsIgnoreCase("all")) && (maxrate > 0))
 						{
 							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate) {
 								public void run() {
-									listAllXRayers(sender, world, oreid, bantype, maxrate);
+									listAllXRayersLB(sender, world, oreid, bantype, maxrate);
 								}
 							  }).start();
 							return true;
 						}
-						checksingle_lb(playername, sender, oreid, world);
-					} else if (logger.equalsIgnoreCase("HE")) {
-					  checksingle_he(playername, sender, oreid, world);
-					}
-					
+						checksingle_lb(playername, sender, oreid, world);					
 					return true;
 				}
 				
-				// palyer given, world empty, ore given -	throw stats for configured world and given ore
+				// player given, world empty, ore given -	throw stats for configured world and given ore
 				if ((playername.length() > 0) && (world.length() == 0) && (oreid > 0)) {
 					world = config.defaultWorld();
-					if (logger.equalsIgnoreCase("LB")) {
 						if ( (playername.equalsIgnoreCase("all")) && (maxrate > 0))
 						{
 							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate) {
 								public void run() {
-									listAllXRayers(sender, world, oreid, bantype, maxrate);
+									listAllXRayersLB(sender, world, oreid, bantype, maxrate);
 								}
 							  }).start();
 							return true;
 						}
-						checksingle_lb(playername, sender, oreid, world);
-					} else if (logger.equalsIgnoreCase("HE")) {
-					  checksingle_he(playername, sender, oreid, world);
-					}
-					
+						checksingle_lb(playername, sender, oreid, world);					
 					return true;
 				}
 			} else {
@@ -463,17 +441,6 @@ public class XrayInformer extends JavaPlugin{
 		}
 		
 		return succeed;
-	}
-
-	private void checksingle_he(String name, CommandSender sender, int oreid, String world) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	private void checkglobal_he(String playername, CommandSender sender,
-			String world) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	private void showinfo(CommandSender sender) {

@@ -4,6 +4,7 @@ description: This plugin protects your server from xrayer
 author: sourcemaker
 website: http://www.widecraft.de
 main: me.sourcemaker.XrayInformer.XrayInformer
+depend: [LogBlock]
 commands:
   xcheck:
     description: Xray check for a given player, enter /xcheck reload to reload the config
