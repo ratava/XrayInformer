@@ -29,6 +29,7 @@ public class XrayInformer extends JavaPlugin{
 	
 	public final Config config = new Config(this);
 	public static final Logger log = Logger.getLogger("Minecraft");
+	boolean banned = false;
 	
 	@SuppressWarnings("unused")
 	private Consumer lbconsumer = null;
@@ -253,7 +254,7 @@ public class XrayInformer extends JavaPlugin{
 		
 	}
 	
-	private void listAllXRayersLB(CommandSender sender, String world, int oreid, String bantype, float maxrate){
+	private void listAllXRayersLB(CommandSender sender, String world, int oreid, String bantype, float maxrate, boolean banned) {
 		LogBlock logBlock = (LogBlock) getServer().getPluginManager().getPlugin("LogBlock");
 
 		QueryParams params = new QueryParams(logBlock);
@@ -298,13 +299,23 @@ public class XrayInformer extends JavaPlugin{
 
 		sender.sendMessage("XrayInformer: All players on "+Material.getMaterial(oreid).toString());
 		sender.sendMessage("-------------------------------");
+		
 		for (Entry<String, CountObj> entry : playerList.entrySet()){
 			if (entry.getValue().stone < 100){
 				continue;
 			}
 			float d = (float) ((float) entry.getValue().diamond * 100.0 / (float) entry.getValue().stone);
 			if (d > maxrate){
-				sender.sendMessage(entry.getKey() + " " + d + "%");
+				if (banned == false)
+				{
+					if (Bukkit.getOfflinePlayer(entry.getKey()).isBanned() == false)
+					{
+						sender.sendMessage(entry.getKey() + " " + d + "%");
+					}
+				} else {
+					sender.sendMessage(entry.getKey() + " " + d + "%");
+				}
+				
 			}
 		}
 		sender.sendMessage("-------------------------------");
@@ -348,6 +359,14 @@ public class XrayInformer extends JavaPlugin{
 				if (hm.containsKey("maxrate")) {
 					maxrate = Float.parseFloat(hm.get("maxrate").toString());
 				}
+				
+				if (hm.containsKey("banned")) {
+					if (hm.get("banned").toString().equalsIgnoreCase("true")) {
+						this.banned = true;
+					} else { 
+						this.banned = false;
+					}
+				} else { this.banned = false; }
 				
 				if (hm.containsKey("world")) {
 					world = hm.get("world").toString();
@@ -408,9 +427,9 @@ public class XrayInformer extends JavaPlugin{
 				if ((playername.length() > 0) && (world.length() > 0) && (oreid > 0)) {					
 						if ( (playername.equalsIgnoreCase("all")) && (maxrate > 0))
 						{
-							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate) {
+							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate, this.banned) {
 								public void run() {
-									listAllXRayersLB(sender, world, oreid, bantype, maxrate);
+									listAllXRayersLB(sender, world, oreid, bantype, maxrate, this.banned);
 								}
 							  }).start();
 							return true;
@@ -424,9 +443,9 @@ public class XrayInformer extends JavaPlugin{
 					world = config.defaultWorld();
 						if ( (playername.equalsIgnoreCase("all")) && (maxrate > 0))
 						{
-							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate) {
+							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate, this.banned) {
 								public void run() {
-									listAllXRayersLB(sender, world, oreid, bantype, maxrate);
+									listAllXRayersLB(sender, world, oreid, bantype, maxrate, this.banned);
 								}
 							  }).start();
 							return true;
@@ -456,6 +475,7 @@ public class XrayInformer extends JavaPlugin{
 		sender.sendMessage("world:WORLDNAME [optional]");
 		sender.sendMessage("ore:OREID [optional, required on player:all]");
 		sender.sendMessage("maxrate:PERCENT [required on player:all]");
+		sender.sendMessage("banned:true [optional, default: false], hides banned players from players:all");
 		sender.sendMessage(ChatColor.GRAY + "example: /xcheck player:guestplayer123 world:farm ore:14");
 		sender.sendMessage(ChatColor.GRAY + "example for mass check: /xcheck player:all ore:14 maxrate:30");
 	}
