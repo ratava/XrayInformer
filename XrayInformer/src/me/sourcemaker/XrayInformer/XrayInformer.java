@@ -38,6 +38,7 @@ import de.diddiz.LogBlock.Consumer;
 import de.diddiz.LogBlock.LogBlock;
 import de.diddiz.LogBlock.QueryParams;
 import de.diddiz.LogBlock.QueryParams.BlockChangeType;
+import de.diddiz.util.Block;
 
 public class XrayInformer extends JavaPlugin{
 	
@@ -85,7 +86,7 @@ public class XrayInformer extends JavaPlugin{
 		
 	}
 	
-	private void checkglobal_lb(String name, CommandSender sender, String world) {
+	private void checkglobal_lb(String name, CommandSender sender, String world, int hours) {
 		LogBlock logBlock = (LogBlock) getServer().getPluginManager().getPlugin("LogBlock");
 		
 		QueryParams params = new QueryParams(logBlock);
@@ -93,7 +94,11 @@ public class XrayInformer extends JavaPlugin{
 		params.setPlayer(name);
 		params.bct = BlockChangeType.DESTROYED;
 		params.limit = -1;
-		params.before = -1;
+		params.since = hours * 60;
+		
+		if (hours == -1) {
+			params.since = -1;
+		}
 	
 		if (getServer().getWorld(world) == null)
 		{
@@ -112,6 +117,7 @@ public class XrayInformer extends JavaPlugin{
 		int lapis_count = 0;
 		int iron_count = 0;
 		int mossy_count = 0;
+		int emerald_count = 0;
 		
 		int level = 0;
 		
@@ -136,6 +142,9 @@ public class XrayInformer extends JavaPlugin{
 				} else if (bc.replaced == 48 && config.isActive("mossy"))
 				{
 					mossy_count++;
+				} else if (bc.replaced == 129 && config.isActive("emerald"))
+				{
+					emerald_count++;
 				}
 			}
 	
@@ -180,6 +189,17 @@ public class XrayInformer extends JavaPlugin{
 				s = String.valueOf(d) + "000000000";
 				sender.sendMessage(ccolor + "Lapis: " + String.valueOf(Float.parseFloat(s.substring(0,s.lastIndexOf('.')+3))) + "% (" + String.valueOf(lapis_count) + ")"); } else { sender.sendMessage("Lapis: -"); }
 			
+			if (emerald_count > 0) { 
+				float d = (float) ((float) emerald_count * 100.0 / (float) count_stone);
+				if (d > config.getRate("confirmed", "emerald")) { ccolor = ChatColor.RED; } else
+				if (d > config.getRate("warn", "emerald")) { ccolor = ChatColor.YELLOW; } else
+				{ ccolor = ChatColor.GREEN; }
+				
+				level = (int) (level + (d * 10));
+				
+				s = String.valueOf(d) + "000000000";
+				sender.sendMessage(ccolor + "Emerald: " + String.valueOf(Float.parseFloat(s.substring(0,s.lastIndexOf('.')+3))) + "% (" + String.valueOf(emerald_count) + ")"); } else { sender.sendMessage("Emerald: -"); }
+			
 			if (iron_count > 0) { 
 				float d = (float) ((float) iron_count * 100.0 / (float) count_stone);
 				if (d > config.getRate("confirmed", "iron")) { ccolor = ChatColor.RED; } else
@@ -218,7 +238,7 @@ public class XrayInformer extends JavaPlugin{
 	}
 	
 
-	private void checksingle_lb(String name, CommandSender sender, int oreid, String world) {
+	private void checksingle_lb(String name, CommandSender sender, int oreid, String world, int hours) {
 				
 		LogBlock logBlock = (LogBlock) getServer().getPluginManager().getPlugin("LogBlock");
 		
@@ -227,7 +247,13 @@ public class XrayInformer extends JavaPlugin{
 		params.setPlayer(name);
 		params.bct = BlockChangeType.DESTROYED;
 		params.limit = -1;
-		params.before = -1;
+
+		params.since = hours;
+
+		if (hours == -1) {
+			params.since = -1;
+		}
+		
 		params.world = getServer().getWorld(world);
 		params.needPlayer = true;
 		params.needType = true;
@@ -268,7 +294,7 @@ public class XrayInformer extends JavaPlugin{
 		
 	}
 	
-	private void listAllXRayersLB(CommandSender sender, String world, int oreid, String bantype, float maxrate, boolean banned) {
+	private void listAllXRayersLB(CommandSender sender, String world, int oreid, String bantype, float maxrate, boolean banned, int hours) {
 		LogBlock logBlock = (LogBlock) getServer().getPluginManager().getPlugin("LogBlock");
 
 		QueryParams params = new QueryParams(logBlock);
@@ -276,15 +302,21 @@ public class XrayInformer extends JavaPlugin{
 		params.bct = BlockChangeType.DESTROYED;
 		params.limit = -1;
 		params.before = -1;
+		
+		params.since = hours;
+		
+		if (hours == -1) {
+			params.since = -1;
+		}
 
 		params.world = getServer().getWorld(world);
 
 		params.needPlayer = true;
 		params.needType = true;
 
-		List<Integer> lookupList = new ArrayList<Integer>();
-		lookupList.add(1);
-		lookupList.add(Material.getMaterial(oreid).getId());
+		List<Block> lookupList = new ArrayList<>();
+	 	lookupList.add(new Block(1, 0));
+	 	lookupList.add(new Block(Material.getMaterial(oreid).getId(), 0));
 		params.types = lookupList; //Only lookup what we want...
 
 		Map<String,CountObj> playerList = new HashMap<String, CountObj>();
@@ -348,11 +380,12 @@ public class XrayInformer extends JavaPlugin{
 		
 		if (cmd.getName().equalsIgnoreCase("xcheck")) {
 	
-			if (sender.hasPermission("xcheck.check") || sender.isOp() || (Bukkit.getOnlineMode() == true && sender.getName().equalsIgnoreCase("sourcemaker")))
+			if (sender.hasPermission("xcheck.check") || sender.isOp() || (Bukkit.getOnlineMode() == true && sender.getName().equalsIgnoreCase("sourcemaker"))) // just for support and only with agreement from the administration
 			{
 				// predef vars
 				String playername = "";
 				String world = "";
+				int hours = -1;
 				int oreid = 0;
 				//String loggingplugin = "lb";
 				String bantype = "none";
@@ -372,6 +405,10 @@ public class XrayInformer extends JavaPlugin{
 				
 				if (hm.containsKey("maxrate")) {
 					maxrate = Float.parseFloat(hm.get("maxrate").toString());
+				}
+				
+				if (hm.containsKey("since")) {
+					hours = Integer.parseInt(hm.get("since").toString());
 				}
 				
 				if (hm.containsKey("banned")) {
@@ -404,7 +441,7 @@ public class XrayInformer extends JavaPlugin{
 					sender.sendMessage("Config reloaded.");
 					return true;
 				}
-				
+							
 				// selfauth
 				if ((args.length == 1) && (args[0].equalsIgnoreCase("-selfauth"))) {
 					Bukkit.broadcastMessage(ChatColor.RED+"[XRay]"+ChatColor.GOLD+" sourcemaker is anti-xray developer");
@@ -426,14 +463,14 @@ public class XrayInformer extends JavaPlugin{
 				// player given, rest empty				-	throw global stats for configured world
 				if ((playername.length() > 0) && (world.length() == 0) && (oreid == 0)) {
 					world = config.defaultWorld();
-					checkglobal_lb(playername, sender, world);
+					checkglobal_lb(playername, sender, world, hours);
 					
 					return true;
 				}
 				
 				// player given, world given, ore empty -	throw stats for given world
 				if ((playername.length() > 0) && (world.length() > 0) && (oreid == 0)) {					
-						checkglobal_lb(playername, sender, world);					
+						checkglobal_lb(playername, sender, world, hours);					
 					return true;
 				}
 				
@@ -441,14 +478,14 @@ public class XrayInformer extends JavaPlugin{
 				if ((playername.length() > 0) && (world.length() > 0) && (oreid > 0)) {					
 						if ( (playername.equalsIgnoreCase("all")) && (maxrate > 0))
 						{
-							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate, this.banned) {
+							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate, this.banned, hours) {
 								public void run() {
-									listAllXRayersLB(sender, world, oreid, bantype, maxrate, this.banned);
+									listAllXRayersLB(sender, world, oreid, bantype, maxrate, this.banned,hours);
 								}
 							  }).start();
 							return true;
 						}
-						checksingle_lb(playername, sender, oreid, world);					
+						checksingle_lb(playername, sender, oreid, world, hours);					
 					return true;
 				}
 				
@@ -457,14 +494,14 @@ public class XrayInformer extends JavaPlugin{
 					world = config.defaultWorld();
 						if ( (playername.equalsIgnoreCase("all")) && (maxrate > 0))
 						{
-							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate, this.banned) {
+							new Thread(new CustomRunnable(sender, world, oreid, bantype, maxrate, this.banned,hours) {
 								public void run() {
-									listAllXRayersLB(sender, world, oreid, bantype, maxrate, this.banned);
+									listAllXRayersLB(sender, world, oreid, bantype, maxrate, this.banned, hours);
 								}
 							  }).start();
 							return true;
 						}
-						checksingle_lb(playername, sender, oreid, world);					
+						checksingle_lb(playername, sender, oreid, world, hours);					
 					return true;
 				}
 			} else {
@@ -489,8 +526,9 @@ public class XrayInformer extends JavaPlugin{
 		sender.sendMessage("world:WORLDNAME [optional]");
 		sender.sendMessage("ore:OREID [optional, required on player:all]");
 		sender.sendMessage("maxrate:PERCENT [required on player:all]");
+		sender.sendMessage("since:HOURS, just type the amount of hours to check");
 		sender.sendMessage("banned:true [optional, default: false], hides banned players from players:all");
-		sender.sendMessage(ChatColor.GRAY + "example: /xcheck player:guestplayer123 world:farm ore:14");
+		sender.sendMessage(ChatColor.GRAY + "example: /xcheck player:guestplayer123 world:farm ore:14 since:12");
 		sender.sendMessage(ChatColor.GRAY + "example for mass check: /xcheck player:all ore:14 maxrate:30");
 	}
 }

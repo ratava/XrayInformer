@@ -23,10 +23,12 @@ public class CustomRunnable implements Runnable {
 	String bantype;
 	float maxrate;
 	boolean banned;
+	int hours;
 
 	public CustomRunnable(CommandSender sender, String world, int oreid,
-			String bantype, float maxrate, boolean banned) {
+			String bantype, float maxrate, boolean banned, int hours) {
 		this.sender = sender;
+		this.hours = hours;
 		this.world = world;
 		this.oreid = oreid;
 		this.bantype = bantype;

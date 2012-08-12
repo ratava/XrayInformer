@@ -37,12 +37,17 @@ public class Config {
 		config.addDefault("lapis", true);
 		config.addDefault("iron", true);
 		config.addDefault("mossy", true);
+		config.addDefault("emerald", true);
+		
 		
 		config.addDefault("diamond_warn", 3.2);
 		config.addDefault("diamond_confirmed", 3.8);
 		
 		config.addDefault("gold_warn", 8.0);
 		config.addDefault("gold_confirmed", 10.0);
+		
+		config.addDefault("emerald_warn", 0.3);
+		config.addDefault("emerald_confirmed", 0.5);
 		
 		config.addDefault("lapis_warn", 3.2);
 		config.addDefault("lapis_confirmed", 3.8);
