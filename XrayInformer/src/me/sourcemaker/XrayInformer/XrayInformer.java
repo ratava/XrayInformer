@@ -334,8 +334,10 @@ public class XrayInformer extends JavaPlugin{
 				if (bc.replaced == Material.STONE.getId())
 				{
 					counter.stone++;
-				} else if (bc.replaced == Material.getMaterial(oreid).getId()) {
+				} else if (bc.replaced == Material.getMaterial(oreid).getId()) && (Material.getMaterial(oreid).toString() == "Diamond"){
 					counter.diamond++;
+				} else if (bc.replaced == Material.getMaterial(oreid).getId()) && (Material.getMaterial(oreid).toString() == "Emerald"){
+					counter.emerald++;
 				}
 			}
 		}
